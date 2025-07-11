@@ -1,17 +1,19 @@
-// Add Balance Routes
-
 //jshint esversion:8
 
 const express = require("express");
 const router = express.Router();
-const stripe = require("stripe")(process.env.SK_TEST);
-
-const { ensureAuth, ensureGuest } = require("../../middleware/auth");
-
+const Razorpay = require("razorpay");
+const { ensureAuth } = require("../../middleware/auth");
 const User = require("../../models/User");
 const Transaction = require("../../models/Transaction");
 
-// @desc     Add Balance
+// Initialize Razorpay instance with your test keys
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// @desc     Render Add Balance page
 // @route    GET /addBalance
 // @access   Private
 router.get("/", ensureAuth, (req, res) => {
@@ -21,65 +23,58 @@ router.get("/", ensureAuth, (req, res) => {
     layout: "layouts/app",
     avatar,
     user,
-    publishableKey: process.env.PK_TEST,
     href: "/addBalance",
   });
 });
 
-// @desc     Add Balance
-// @route    POST /addBalance
+// @desc     Create Razorpay order
+// @route    POST /addBalance/create-order
 // @access   Private
-router.post("/", ensureAuth, async (req, res) => {
-  let amount = Number(req.body.addAmount); // type cast amount to number as body parser take it as string
+router.post("/create-order", ensureAuth, async (req, res) => {
+  const amount = Number(req.body.addAmount) * 100; // Convert to paise
 
-  let finalAmount = amount + req.user.balance;
-
-  const { stripeToken } = req.body;
+  const options = {
+    amount,
+    currency: "INR",
+    receipt: `rcpt_${Date.now()}`,
+  };
 
   try {
-    // Stripe Payment
-    await stripe.charges.create(
-      {
-        amount: req.user.balance * 100,
-        currency: "usd",
-        source: stripeToken,
-        description: req.user.email,
-      },
-      (err) => {
-        if (err && err.type === "StripeCardError") {
-          return res.render("error/500");
-        } else {
-          console.log("Payment Success");
-        }
-      }
-    );
+    const order = await razorpay.orders.create(options);
+    res.json(order); // Send order details back to client
+  } catch (err) {
+    console.error("Razorpay Order Creation Failed:", err);
+    res.status(500).send("Razorpay Order Creation Failed");
+  }
+});
 
-    // Updating balance to user's schema.
-    req.body.user = req.user.id;
+// @desc     Handle payment success
+// @route    POST /addBalance/payment-success
+// @access   Private
+router.post("/payment-success", ensureAuth, async (req, res) => {
+  const amount = Number(req.body.amount);
+  const finalAmount = amount + req.user.balance;
+
+  try {
+    // Update user balance
     await User.findOneAndUpdate(
       { _id: req.user.id },
       { balance: finalAmount },
-      {
-        new: true, // it will create a new one, if it doesn't exist
-        runValidators: true, // it check weather the fields are valid or not
-      }
+      { new: true, runValidators: true }
     );
 
-    // Adding new transaction details on Transaction Schema.
-    const transactionDetails = "Balance Added to Wallet";
-    const transactionOperation = "Deposit";
-    const transactionUser = req.user.id;
+    // Log the transaction
     await Transaction.create({
-      details: transactionDetails,
+      details: "Balance Added to Wallet",
       amount: amount,
-      operation: transactionOperation,
-      user: transactionUser,
+      operation: "Deposit",
+      user: req.user.id,
     });
 
-    res.redirect("/done");
+    res.json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.render("error/500");
+    console.error("Failed to update balance:", err);
+    res.status(500).send("Failed to save payment info");
   }
 });
 

@@ -1,11 +1,7 @@
-<section
-  class="text-gray-700 body-font md:ml-56 lg:ml-64 md:mx-auto md:pr-14 w-screen inline"
->
+<section class="text-gray-700 body-font md:ml-56 lg:ml-64 md:mx-auto md:pr-14 w-screen inline">
   <div class="container px-5 py-10 mx-auto md:px-auto">
     <div class="my-4 absolute-center">
-      <h2
-        class="text-gray-700 lg:text-6xl text-5xl font-semibold leading-none tracking-wider px-5"
-      >
+      <h2 class="text-gray-700 lg:text-6xl text-5xl font-semibold leading-none tracking-wider px-5">
         Add Balance
       </h2>
     </div>
@@ -20,32 +16,74 @@
         class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 my-6"
       >
         <div class="text-center mb-4">
-          <label class="block text-gray-700 text-2xl font-bold mb-2">
-            Enter amount : Minimum $50
-          </label>
+          <label class="text-gray-700 text-2xl font-bold">Enter amount: Minimum ₹50</label>
           <input
             id="amount"
+            type="number"
             min="50"
             max="50000"
             value="50"
-            type="number"
             onchange="check(this.value)"
-            class="shadow appearance-none border rounded w-2/5 py-2 px-3 my-2 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            class="shadow border rounded w-2/5 py-2 px-3"
             name="addAmount"
-            placeholder="$ Amount"
             required
           />
-          <input type="hidden" name="_csrf" />
-          <!-- below key is a publishable test key by stripe -->
-          <script
-            id="stripe"
-            class="stripe-button"
-            data-key="pk_test_51HJXY7LQt0nnsdDXDLOAd3oeKUqMRVwpgkR3H7e0q4ghJqhfMg8RPpCWLeOFZ35zOBiccvV5Xq85VRjuRtCQGtFL00ZKyBN7Kr"
-            src="https://checkout.stripe.com/checkout.js"
-            data-image="images/TradeByte.png"
-            data-name="TradeByte"
-            data-description="TradeByte Balance"
-          ></script>
+
+          <button
+            type="button"
+            onclick="payNow()"
+            class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded mt-4"
+          >
+            Add Balance with Razorpay
+          </button>
+
+          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+          <script>
+            async function payNow() {
+              const amount = document.getElementById("amount").value;
+
+              const res = await fetch("/addBalance/create-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ addAmount: amount }),
+              });
+
+              const data = await res.json();
+
+              const options = {
+                key: "<%= process.env.RAZORPAY_KEY_ID %>",
+                amount: data.amount,
+                currency: "INR",
+                name: "TradeByte",
+                description: "Add Balance",
+                order_id: data.id,
+                handler: async function (response) {
+                  const successRes = await fetch("/addBalance/payment-success", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ amount }),
+                  });
+
+                  if (successRes.ok) {
+                    location.href = "/done";
+                  } else {
+                    location.href = "/error";
+                  }
+                },
+                prefill: {
+                  name: "Test User",
+                  email: "<%= user.email %>",
+                  contact: "9999999999",
+                },
+                theme: {
+                  color: "#3399cc",
+                },
+              };
+
+              const rzp = new Razorpay(options);
+              rzp.open();
+            }
+          </script>
         </div>
       </form>
 
