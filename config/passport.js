@@ -10,7 +10,7 @@ module.exports = function (passport) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "/auth/google/callback",
+        callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         console.log(profile.emails[0].value);
@@ -20,8 +20,7 @@ module.exports = function (passport) {
           firstName: profile.name.givenName,
           lastName: profile.name.familyName,
           email: profile.emails[0].value,
-          password:
-            process.env.OAUTH_PASS || "google-oauth-MOGicvVFYPzk9O7Y1vAo",
+          password: process.env.OAUTH_PASS || "google-oauth-MOGicvVFYPzk9O7Y1vAo",
           image: profile.photos[0].value,
           balance: 10000,
         };
