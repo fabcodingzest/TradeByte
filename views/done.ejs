@@ -11,10 +11,7 @@
       integrity="sha256-46r060N2LrChLLb5zowXQ72/iKKNiw/lAmygmHExk/o="
       crossorigin="anonymous"
     />
-    <link
-      href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
 
@@ -22,14 +19,10 @@
     <!---Card component-->
     <div class="m-2">
       <div
-        class="flex justify-center items-center done-container max-w-sm mx-auto flex p-5 bg-white rounded-lg shadow-2xl"
+        class="flex justify-center items-center done-container max-w-sm mx-auto p-5 bg-white rounded-lg shadow-2xl"
       >
         <div class="py-4">
-          <h1
-            class="heading font-bold mb-2 text-6xl text-center text-green-700"
-          >
-            Done
-          </h1>
+          <h1 class="heading font-bold mb-2 text-6xl text-center text-green-700">Done</h1>
           <div class="flex justify-center items-center text-green-400 my-6">
             <i id="check" class="far fa-check-circle fa-7x"></i>
           </div>
@@ -46,7 +39,7 @@
               <i class="far fa-times-circle"></i> Back
             </button>
 
-            <button
+            <!-- <button
               class="relative share bg-gray-700 hover:bg-blue-400 text-white font-bold py-2 px-3 md:px-5 mx-2 mt-4 mb-3 rounded-full cursor-pointer"
               onclick="share(this)"
             >
@@ -60,7 +53,7 @@
                 ></div>
                 <div class="addthis_sharing_toolbox text-center"></div>
               </div>
-            </button>
+            </button> -->
           </div>
         </div>
       </div>
@@ -77,8 +70,7 @@
 
       //this is a publicer id
       let AddthisPubID = "ra-5f3af90d32b2c7af";
-      let AddThisJS =
-        "//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5f3af90d32b2c7af";
+      let AddThisJS = "//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5f3af90d32b2c7af";
 
       function share(button) {
         if (!AddThisJSLoaded && !clickedOnShare) {
