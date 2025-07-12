@@ -311,7 +311,14 @@ router.put("/confirmSell", ensureAuth, async (req, res) => {
           <p>Have a great Day!</p>
         `, // html body
     };
-    emailHelper.sendEmail(options);
+    // Send email with error handling
+    try {
+      await emailHelper.sendEmail(options);
+      console.log("Purchase confirmation email sent successfully");
+    } catch (emailError) {
+      console.error("Failed to send purchase confirmation email:", emailError);
+      // Continue with the transaction even if email fails
+    }
 
     // Adding new transaction details on Transaction Schema.
     const transactionDetails = `Sold ${noOfStock} ${msg} of ${companySymbol}`;
