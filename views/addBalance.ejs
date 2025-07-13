@@ -16,7 +16,7 @@
         class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 my-6"
       >
         <div class="text-center mb-4">
-          <label class="text-gray-700 text-2xl font-bold">Enter amount: Minimum ₹50</label>
+          <label class="text-gray-700 text-2xl font-bold">Enter amount: Minimum $50</label>
           <input
             id="amount"
             type="number"
@@ -53,7 +53,7 @@
               const options = {
                 key: "<%= process.env.RAZORPAY_KEY_ID %>",
                 amount: data.amount,
-                currency: "INR",
+                currency: "USD",
                 name: "TradeByte",
                 description: "Add Balance",
                 order_id: data.id,
@@ -61,7 +61,12 @@
                   const successRes = await fetch("/addBalance/payment-success", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ amount }),
+                    body: JSON.stringify({
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_signature: response.razorpay_signature,
+                      amount,
+                    }),
                   });
 
                   if (successRes.ok) {

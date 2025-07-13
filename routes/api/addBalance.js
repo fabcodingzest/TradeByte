@@ -1,6 +1,7 @@
 //jshint esversion:8
 
 const express = require("express");
+const crypto = require("crypto");
 const router = express.Router();
 const Razorpay = require("razorpay");
 const { ensureAuth } = require("../../middleware/auth");
@@ -35,7 +36,7 @@ router.post("/create-order", ensureAuth, async (req, res) => {
 
   const options = {
     amount,
-    currency: "INR",
+    currency: "USD",
     receipt: `rcpt_${Date.now()}`,
   };
 
@@ -52,8 +53,19 @@ router.post("/create-order", ensureAuth, async (req, res) => {
 // @route    POST /addBalance/payment-success
 // @access   Private
 router.post("/payment-success", ensureAuth, async (req, res) => {
-  const amount = Number(req.body.amount);
-  const finalAmount = amount + req.user.balance;
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature, amount } = req.body;
+  const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
+    .digest("hex");
+
+  if (expectedSignature !== razorpay_signature) {
+    console.error("Payment signature verification failed");
+    return res.status(400).json({ success: false, message: "Invalid signature" });
+  }
+
+  const finalAmount = parseFloat(amount) + parseFloat(req.user.balance);
 
   try {
     // Update user balance
