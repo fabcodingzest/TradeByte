@@ -108,6 +108,8 @@ app.use("/addBalance", require("./routes/api/addBalance"));
 app.use("/transaction", require("./routes/api/transaction"));
 app.use("/search", require("./routes/api/search"));
 app.use("/edit", require("./routes/api/edit"));
+app.use("/error", require("./routes/api/error"));
+
 
 // Port: Love You 3000
 const PORT = process.env.PORT || 3000;
@@ -119,3 +121,9 @@ app.listen(
     `TradeByte is running in ${process.env.NODE_ENV} mode on port ${PORT}`
   )
 );
+
+app.use((req, res) => {
+  res.status(404).render("404", {
+    message: "Page not found",
+  });
+});
